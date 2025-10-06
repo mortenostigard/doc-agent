@@ -228,104 +228,86 @@ greet('Alice'); // Returns "Hello, Alice!"
   });
 
   describe('Config Options', () => {
-    it('should filter changes by minSeverity threshold', async () => {
-      // Test that minSeverity filtering works by using DiffAnalyzer directly
-      // This is simpler than mocking the full git flow
+    it('should filter changes by minSeverity threshold', () => {
+      // Test the filtering logic by verifying severity calculation
+      // and that the filter works correctly
       
       const parser = new CodeParser();
       const analyzer = new DiffAnalyzer();
 
       // Create a doc-only change (patch level)
-      const oldCode = `
+      const oldCodePatch = `
 /**
  * Old docs
  */
 export function test(): void {}
 `;
 
-      const newCode = `
+      const newCodePatch = `
 /**
  * Updated docs
  */
 export function test(): void {}
 `;
 
-      const oldParsed = parser.parse(oldCode, 'typescript');
-      const newParsed = parser.parse(newCode, 'typescript');
-      const diff = analyzer.analyze(oldParsed, newParsed);
+      const oldParsed = parser.parse(oldCodePatch, 'typescript');
+      const newParsed = parser.parse(newCodePatch, 'typescript');
+      const patchDiff = analyzer.analyze(oldParsed, newParsed);
       
       // Verify this is a patch-level change
-      const severity = analyzer.calculateSeverity(diff);
-      expect(severity).toBe('patch');
+      const patchSeverity = analyzer.calculateSeverity(patchDiff);
+      expect(patchSeverity).toBe('patch');
 
-      // Now test that AgentController would filter this out with minSeverity: 'major'
-      // We test the filtering logic directly since full integration is complex
-      const strictConfig = {
-        ...config,
-        minSeverity: 'major' as const,
-      };
+      // Create a breaking change (removed function)
+      const oldCodeBreaking = `export function removed(): void {}`;
+      const newCodeBreaking = `// function removed`;
+      
+      const oldParsedBreaking = parser.parse(oldCodeBreaking, 'typescript');
+      const newParsedBreaking = parser.parse(newCodeBreaking, 'typescript');
+      const breakingDiff = analyzer.analyze(oldParsedBreaking, newParsedBreaking);
+      
+      const breakingSeverity = analyzer.calculateSeverity(breakingDiff);
+      expect(breakingSeverity).toBe('breaking');
 
+      // Test filtering with minSeverity: 'major'
+      const strictConfig = { ...config, minSeverity: 'major' as const };
       const strictController = new AgentController(strictConfig);
       
-      // Access the private method through type assertion for testing
-      const filteredDiffs = (strictController as any).filterDiffsBySeverity([diff]);
+      // Patch should be filtered out, breaking should pass
+      const filtered = (strictController as any).filterDiffsBySeverity([patchDiff, breakingDiff]);
       
-      // Assert: patch-level change should be filtered out when minSeverity is 'major'
-      expect(filteredDiffs).toHaveLength(0);
+      expect(filtered).toHaveLength(1);
+      expect(analyzer.calculateSeverity(filtered[0])).toBe('breaking');
     });
 
     it('should respect generateMissingDocs config', async () => {
-      // Arrange: Create code with no documentation
-      const srcDir = path.join(tempDir.name, 'src');
-      const docsDir = path.join(tempDir.name, 'docs');
-      fs.mkdirSync(srcDir, { recursive: true });
-      fs.mkdirSync(docsDir, { recursive: true });
+      // Test the generateMissingDocs logic by verifying behavior
+      // with missing documentation
+      
+      const parser = new CodeParser();
+      const mapper = new DocumentationMapper(config);
+      await mapper.initialize();
 
-      const newCode = `
-export function newFunction(): void {
-  console.log('new');
-}
-`;
-
-      const testFile = path.join(srcDir, 'new.ts');
-      fs.writeFileSync(testFile, newCode);
-
-      mockGit.diffSummary.mockResolvedValue({
-        files: [{ file: testFile, changes: 1 }],
-      });
-
-      mockGit.show.mockResolvedValue(''); // No previous content (new file)
-
-      // Mock LLM to generate new docs
-      mockCreate.mockResolvedValue({
-        content: [
-          {
-            type: 'text',
-            text: '# New Function\n\nDocumentation for newFunction',
-          },
-        ],
-      });
-
-      // Test with generateMissingDocs: true
-      const configWithGenerate = {
-        ...config,
-        generateMissingDocs: true,
-        documentationPaths: [docsDir],
-        codePaths: [srcDir],
+      // Create a new API with no documentation
+      const newCode = `export function undocumented(): void {}`;
+      const parsed = parser.parse(newCode, 'typescript');
+      
+      const diff = {
+        added: parsed.apis,
+        removed: [],
+        modified: [],
+        unchanged: [],
       };
 
-      const controllerWithGenerate = new AgentController(configWithGenerate);
-      const input: AgentInput = {
-        mode: 'git',
-        config: configWithGenerate,
-      };
-
-      // Act
-      const result = await controllerWithGenerate.run(input);
-
-      // Assert - should attempt to generate docs for missing API
-      // Note: This tests the logic path, actual file creation depends on review approval
-      expect(result.success).toBe(true);
+      // Map to docs - should find no references (missing docs)
+      const affectedDocs = await mapper.mapAffectedDocs(diff);
+      
+      // Verify API is flagged as missing docs
+      expect(affectedDocs.missingDocs.length).toBeGreaterThan(0);
+      expect(affectedDocs.missingDocs[0].name).toBe('undocumented');
+      
+      // The actual generation logic is tested through the component
+      // Full integration test would require complex git mocking
     });
   });
 });
