@@ -20,6 +20,7 @@ import {
   DocumentationUpdate,
   ReviewDecision,
   ChangeSeverity,
+  APIElement,
 } from '../types';
 
 /**
@@ -325,7 +326,42 @@ export class AgentController {
       }
     }
 
+    // Handle missing documentation if configured
+    if (this.config.generateMissingDocs && affectedDocs.missingDocs.length > 0) {
+      for (const api of affectedDocs.missingDocs) {
+        try {
+          const newDoc = await this.aiGenerator.generateNewDoc(api, context);
+          // Create a documentation update for the new file
+          const docPath = this.generateDocPath(api);
+          updates.push({
+            filePath: docPath,
+            originalContent: '',
+            updatedContent: newDoc,
+            changes: [],
+            reasoning: `Generated new documentation for undocumented API: ${api.name}`,
+          });
+        } catch (error) {
+          errors.push(
+            new Error(`Failed to generate docs for ${api.name}: ${(error as Error).message}`)
+          );
+        }
+      }
+    }
+
     return updates;
+  }
+
+  /**
+   * Generate a documentation file path for a new API
+   */
+  private generateDocPath(api: APIElement): string {
+    // Simple strategy: create docs in the first configured documentation path
+    const baseDocPath = this.config.documentationPaths[0];
+    // Remove glob patterns
+    const cleanPath = baseDocPath.replace(/\/?\*\*\/?\*\.\w+$/, '');
+    // Generate filename from API name
+    const filename = `${api.name.toLowerCase()}.md`;
+    return path.join(cleanPath, filename);
   }
 
   /**
