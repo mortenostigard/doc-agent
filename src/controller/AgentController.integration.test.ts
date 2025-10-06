@@ -102,7 +102,6 @@ greet('Alice'); // Returns "Hello, Alice!"
       documentationPaths: [docsDir],
       codePaths: [srcDir],
       ignorePaths: ['node_modules/**', 'dist/**'],
-      autoApprove: false,
       minSeverity: 'minor',
       generateMissingDocs: false,
       llmProvider: 'anthropic',

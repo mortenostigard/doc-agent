@@ -15,7 +15,6 @@
     "*.test.ts",
     "*.spec.ts"
   ],
-  "autoApprove": false,
   "minSeverity": "minor",
   "generateMissingDocs": false,
   "llmProvider": "openai",

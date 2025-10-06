@@ -9,7 +9,6 @@ describe('ContextBuilder', () => {
     documentationPaths: ['docs/**/*.md'],
     codePaths: ['src/**/*.ts'],
     ignorePaths: ['node_modules/**'],
-    autoApprove: false,
     minSeverity: 'minor',
     generateMissingDocs: true,
     llmProvider: 'openai',

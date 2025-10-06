@@ -37,7 +37,6 @@ describe('ChangeDetector', () => {
       documentationPaths: ['docs/**/*.md'],
       codePaths: ['src/**/*.ts', 'src/**/*.js'],
       ignorePaths: ['**/*.test.ts', '**/node_modules/**'],
-      autoApprove: false,
       minSeverity: 'minor',
       generateMissingDocs: true,
       llmProvider: 'openai',

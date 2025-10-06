@@ -19,7 +19,6 @@ export interface AgentConfig {
   ignorePaths: string[];
 
   // Behavior
-  autoApprove: boolean;
   minSeverity: ChangeSeverity;
   generateMissingDocs: boolean;
 

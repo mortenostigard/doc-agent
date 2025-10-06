@@ -5,8 +5,6 @@
 
 export * from './types/index.js';
 export { ConfigManager } from './config/ConfigManager.js';
-
-// Implemented components
 export { ChangeDetector } from './detection/ChangeDetector.js';
 export { CodeParser } from './parsing/CodeParser.js';
 export { DiffAnalyzer } from './diff/DiffAnalyzer.js';

@@ -61,7 +61,6 @@ This project includes getUserById and other utilities.
       documentationPaths: [testDir],
       codePaths: ['src/**/*.ts'],
       ignorePaths: ['node_modules/**'],
-      autoApprove: false,
       minSeverity: 'minor',
       generateMissingDocs: false,
       llmProvider: 'openai',

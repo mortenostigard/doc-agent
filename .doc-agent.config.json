@@ -12,7 +12,6 @@
     "dist/**",
     "test/**"
   ],
-  "autoApprove": false,
   "minSeverity": "minor",
   "generateMissingDocs": false,
   "llmProvider": "openai",
