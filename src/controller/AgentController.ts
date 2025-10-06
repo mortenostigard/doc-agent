@@ -147,7 +147,10 @@ export class AgentController {
 
       // Phase 5: Review and apply
       this.updatePhase('reviewing');
-      const decisions = await this.reviewUpdates(updates, errors);
+      
+      // Create ReviewInterface with autoApprove setting from input
+      const reviewInterface = new ReviewInterface(undefined, input.autoApprove);
+      const decisions = await this.reviewUpdates(updates, errors, reviewInterface);
       this.state.reviewDecisions = decisions;
 
       // Phase 6: Apply approved changes
@@ -369,10 +372,11 @@ export class AgentController {
    */
   private async reviewUpdates(
     updates: DocumentationUpdate[],
-    errors: Error[]
+    errors: Error[],
+    reviewInterface: ReviewInterface
   ): Promise<ReviewDecision[]> {
     try {
-      return await this.reviewInterface.presentBatch(updates);
+      return await reviewInterface.presentBatch(updates);
     } catch (error) {
       errors.push(new Error(`Review failed: ${(error as Error).message}`));
       // Return reject decisions for all updates

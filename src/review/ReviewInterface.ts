@@ -14,9 +14,11 @@ import * as fs from 'fs';
  */
 export class ReviewInterface {
   private readonly logFilePath: string;
+  private readonly autoApprove: boolean;
 
-  constructor(logFilePath: string = '.doc-agent-decisions.json') {
+  constructor(logFilePath: string = '.doc-agent-decisions.json', autoApprove: boolean = false) {
     this.logFilePath = logFilePath;
+    this.autoApprove = autoApprove;
   }
 
   /**
@@ -34,6 +36,14 @@ export class ReviewInterface {
     // Show diff
     console.log('\n' + chalk.bold('Changes:'));
     this.displayDiff(update.originalContent, update.updatedContent);
+
+    // Auto-approve if flag is set
+    if (this.autoApprove) {
+      console.log('\n' + chalk.green('✓ Auto-approved'));
+      const decision: ReviewDecision = { action: 'approve' };
+      this.logDecision(update, decision);
+      return decision;
+    }
 
     // Get user decision
     const decision = await this.promptForDecision(update);

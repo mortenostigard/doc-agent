@@ -233,6 +233,7 @@ export interface AgentInput {
   mode: AgentMode;
   target?: string; // commit hash or file paths
   config: AgentConfig;
+  autoApprove?: boolean; // Auto-approve all updates without prompting
 }
 
 export interface AgentResult {

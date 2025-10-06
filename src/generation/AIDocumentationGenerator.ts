@@ -359,14 +359,13 @@ ${apiElement.returnType ? `Return Type: ${apiElement.returnType}` : ''}
 Follow these conventions from existing documentation:
 ${context.styleGuide.conventions.map((c) => `- ${c}`).join('\n')}
 
-${
-  context.styleGuide.examplePatterns.length > 0
-    ? `
+${context.styleGuide.examplePatterns.length > 0
+        ? `
 Example Patterns:
 ${context.styleGuide.examplePatterns.map((p) => `- ${p}`).join('\n')}
 `
-    : ''
-}
+        : ''
+      }
 
 ## Required Output
 

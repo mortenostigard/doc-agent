@@ -20,6 +20,7 @@ program
   .option('--files <paths...>', 'Analyze specific files (comma-separated or space-separated)')
   .option('--commit <hash>', 'Analyze changes from a specific commit (default: HEAD)')
   .option('--config <path>', 'Path to configuration file', '.doc-agent.config.json')
+  .option('--yes', 'Auto-approve all documentation updates without prompting')
   .option('--verbose', 'Enable verbose logging')
   .option('--debug', 'Enable debug mode with detailed output')
   .action(async (options) => {
@@ -72,6 +73,7 @@ program
         mode,
         target,
         config,
+        autoApprove: options.yes || false,
       };
 
       // Initialize and run agent
