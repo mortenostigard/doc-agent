@@ -19,6 +19,7 @@ import {
   AffectedDocumentation,
   DocumentationUpdate,
   ReviewDecision,
+  ChangeSeverity,
 } from '../types';
 
 /**
@@ -105,10 +106,23 @@ export class AgentController {
       this.updatePhase('mapping');
       const { parsedCode, diffs } = await this.parseAndAnalyze(changes, errors);
       this.state.parsedCode = parsedCode;
-      this.state.diffs = diffs;
+
+      // Filter diffs by minimum severity
+      const filteredDiffs = this.filterDiffsBySeverity(diffs);
+      this.state.diffs = filteredDiffs;
+
+      if (filteredDiffs.length === 0) {
+        return this.buildResult(
+          true,
+          0,
+          0,
+          errors,
+          `No changes meet the minimum severity threshold (${input.config.minSeverity})`
+        );
+      }
 
       // Count API changes
-      for (const diff of diffs) {
+      for (const diff of filteredDiffs) {
         this.state.metrics.apisChanged +=
           diff.added.length + diff.removed.length + diff.modified.length;
       }
@@ -117,7 +131,7 @@ export class AgentController {
       // Initialize documentation mapper (scans doc files)
       await this.documentationMapper.initialize();
 
-      const affectedDocs = await this.mapAffectedDocumentation(diffs, errors);
+      const affectedDocs = await this.mapAffectedDocumentation(filteredDiffs, errors);
       this.state.affectedDocs = affectedDocs;
 
       if (affectedDocs.files.size === 0) {
@@ -126,7 +140,7 @@ export class AgentController {
 
       // Phase 4: Generate updates
       this.updatePhase('generating');
-      const updates = await this.generateUpdates(affectedDocs, diffs, errors);
+      const updates = await this.generateUpdates(affectedDocs, filteredDiffs, errors);
       this.state.generatedUpdates = updates;
       updatesGenerated = updates.length;
 
@@ -230,6 +244,21 @@ export class AgentController {
     }
 
     return { parsedCode, diffs };
+  }
+
+  /**
+   * Filter diffs by minimum severity threshold
+   */
+  private filterDiffsBySeverity(diffs: APIDiff[]): APIDiff[] {
+    const minSeverity = this.config.minSeverity;
+    const severityOrder: ChangeSeverity[] = ['patch', 'minor', 'major', 'breaking'];
+    const minSeverityIndex = severityOrder.indexOf(minSeverity);
+
+    return diffs.filter((diff) => {
+      const severity = this.diffAnalyzer.calculateSeverity(diff);
+      const severityIndex = severityOrder.indexOf(severity);
+      return severityIndex >= minSeverityIndex;
+    });
   }
 
   /**
