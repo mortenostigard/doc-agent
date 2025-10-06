@@ -1,0 +1,23 @@
+{
+  "documentationPaths": [
+    "docs/**/*.md",
+    "README.md"
+  ],
+  "codePaths": [
+    "src/**/*.ts",
+    "src/**/*.js"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "test/**"
+  ],
+  "autoApprove": false,
+  "minSeverity": "minor",
+  "generateMissingDocs": false,
+  "llmProvider": "openai",
+  "llmModel": "gpt-4-turbo",
+  "temperature": 0.3,
+  "documentationFormat": "markdown",
+  "mode": "manual"
+}
