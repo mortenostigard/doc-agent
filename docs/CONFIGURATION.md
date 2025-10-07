@@ -10,10 +10,10 @@ The agent is configured via `.doc-agent.config.json` in your project root.
 
 ```bash
 # Create with default settings
-node dist/cli.js init
+doc-agent init
 
 # Create with custom path
-node dist/cli.js init --output custom-config.json
+doc-agent init --output custom-config.json
 ```
 
 ### Example Configuration
@@ -423,7 +423,7 @@ CLI options override configuration file settings.
 Specify a custom configuration file path.
 
 ```bash
-node dist/cli.js run --config custom-config.json
+doc-agent run --config custom-config.json
 ```
 
 ### --files
@@ -431,7 +431,7 @@ node dist/cli.js run --config custom-config.json
 Analyze specific files instead of git changes.
 
 ```bash
-node dist/cli.js run --files src/api.ts src/utils.ts
+doc-agent run --files src/api.ts src/utils.ts
 ```
 
 ### --commit
@@ -439,7 +439,7 @@ node dist/cli.js run --files src/api.ts src/utils.ts
 Analyze changes from a specific commit.
 
 ```bash
-node dist/cli.js run --commit abc123
+doc-agent run --commit abc123
 ```
 
 ### --yes
@@ -447,7 +447,7 @@ node dist/cli.js run --commit abc123
 Auto-approve all updates without prompting.
 
 ```bash
-node dist/cli.js run --yes
+doc-agent run --yes
 ```
 
 ### --verbose
@@ -455,7 +455,7 @@ node dist/cli.js run --yes
 Enable verbose logging.
 
 ```bash
-node dist/cli.js run --verbose
+doc-agent run --verbose
 ```
 
 ### --debug
@@ -463,8 +463,10 @@ node dist/cli.js run --verbose
 Enable debug mode with detailed output.
 
 ```bash
-node dist/cli.js run --debug
+doc-agent run --debug
 ```
+
+
 
 ---
 
