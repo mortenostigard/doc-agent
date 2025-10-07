@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { ConfigManager } from './config/ConfigManager.js';
 import { AgentController } from './controller/AgentController.js';
+import { Logger } from './utils/Logger.js';
 import type { AgentInput } from './types/index.js';
 
 const program = new Command();
@@ -76,9 +77,12 @@ program
         autoApprove: options.yes || false,
       };
 
+      // Initialize logger with verbosity settings
+      const logger = new Logger(options.verbose || false, options.debug || false);
+
       // Initialize and run agent
       console.log(chalk.cyan('🚀 Starting agent pipeline...\n'));
-      const controller = new AgentController(config);
+      const controller = new AgentController(config, logger);
       const result = await controller.run(input);
 
       // Display results

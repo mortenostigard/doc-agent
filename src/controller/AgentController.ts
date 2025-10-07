@@ -7,6 +7,7 @@ import { DocumentationMapper } from '../mapping/DocumentationMapper';
 import { ContextBuilder } from '../context/ContextBuilder';
 import { AIDocumentationGenerator } from '../generation/AIDocumentationGenerator';
 import { ReviewInterface } from '../review/ReviewInterface';
+import { Logger } from '../utils/Logger';
 import {
   AgentConfig,
   AgentInput,
@@ -48,8 +49,10 @@ export class AgentController {
   private readonly contextBuilder: ContextBuilder;
   private readonly aiGenerator: AIDocumentationGenerator;
   private readonly reviewInterface: ReviewInterface;
+  private readonly logger: Logger;
 
-  constructor(private readonly config: AgentConfig) {
+  constructor(private readonly config: AgentConfig, logger?: Logger) {
+    this.logger = logger || new Logger();
     // Initialize all components
     this.changeDetector = new ChangeDetector();
     this.changeDetector.initialize(config);
@@ -95,18 +98,24 @@ export class AgentController {
 
     try {
       // Phase 1: Detect changes
+      this.logger.logPhase('Detecting changes');
       this.updatePhase('detecting');
       const changes = await this.detectChanges(input);
       this.state.detectedChanges = changes;
+      this.logger.logMetric('Changes detected', changes.length);
 
       if (changes.length === 0) {
+        this.logger.logInfo('No code changes detected');
         return this.buildResult(true, 0, 0, [], 'No code changes detected');
       }
 
       // Phase 2: Parse and analyze
+      this.logger.logPhase('Parsing and analyzing code');
       this.updatePhase('mapping');
       const { parsedCode, diffs } = await this.parseAndAnalyze(changes, errors);
       this.state.parsedCode = parsedCode;
+      this.logger.logMetric('Files parsed', parsedCode.size);
+      this.logger.logMetric('Diffs found', diffs.length);
 
       // Filter diffs by minimum severity
       const filteredDiffs = this.filterDiffsBySeverity(diffs);
@@ -129,23 +138,29 @@ export class AgentController {
       }
 
       // Phase 3: Map to affected documentation
+      this.logger.logPhase('Mapping to affected documentation');
       // Initialize documentation mapper (scans doc files)
       await this.documentationMapper.initialize();
 
       const affectedDocs = await this.mapAffectedDocumentation(filteredDiffs, errors);
       this.state.affectedDocs = affectedDocs;
+      this.logger.logMetric('Affected docs', affectedDocs.files.size);
 
       if (affectedDocs.files.size === 0) {
+        this.logger.logInfo('No documentation files affected by changes');
         return this.buildResult(true, 0, 0, errors, 'No documentation files affected by changes');
       }
 
       // Phase 4: Generate updates
+      this.logger.logPhase('Generating documentation updates');
       this.updatePhase('generating');
       const updates = await this.generateUpdates(affectedDocs, filteredDiffs, errors);
       this.state.generatedUpdates = updates;
       updatesGenerated = updates.length;
+      this.logger.logMetric('Updates generated', updatesGenerated);
 
       // Phase 5: Review and apply
+      this.logger.logPhase('Reviewing updates');
       this.updatePhase('reviewing');
       
       // Create ReviewInterface with autoApprove setting from input
@@ -154,12 +169,15 @@ export class AgentController {
       this.state.reviewDecisions = decisions;
 
       // Phase 6: Apply approved changes
+      this.logger.logPhase('Applying approved updates');
       updatesApplied = await this.applyApprovedUpdates(updates, decisions, errors);
       this.state.metrics.docsUpdated = updatesApplied;
+      this.logger.logMetric('Updates applied', updatesApplied);
 
       // Complete
       this.updatePhase('complete');
       this.state.metrics.executionTime = Date.now() - this.state.startTime.getTime();
+      this.logger.logMetric('Execution time', `${this.state.metrics.executionTime}ms`);
 
       return this.buildResult(
         true,
@@ -169,6 +187,7 @@ export class AgentController {
         this.buildSummary(updatesGenerated, updatesApplied, errors)
       );
     } catch (error) {
+      this.logger.logError('Pipeline failed', error as Error);
       errors.push(error as Error);
       return this.buildResult(
         false,
