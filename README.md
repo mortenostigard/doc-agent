@@ -101,12 +101,17 @@ node dist/cli.js run [options]
   node dist/cli.js run --config custom-config.json
   ```
 
+- `--yes` - Auto-approve all documentation updates without prompting
+  ```bash
+  node dist/cli.js run --yes
+  ```
+
 - `--verbose` - Enable verbose logging to see detailed execution information
   ```bash
   node dist/cli.js run --verbose
   ```
 
-- `--debug` - Enable debug mode with stack traces for errors
+- `--debug` - Enable debug mode with detailed output and stack traces
   ```bash
   node dist/cli.js run --debug
   ```
@@ -148,6 +153,16 @@ node dist/cli.js run --commit HEAD~1
 node dist/cli.js run --verbose
 ```
 
+**Debug mode for troubleshooting:**
+```bash
+node dist/cli.js run --debug
+```
+
+**Auto-approve all changes (use with caution):**
+```bash
+node dist/cli.js run --yes
+```
+
 **Use a custom configuration:**
 ```bash
 node dist/cli.js run --config .doc-agent.prod.json
@@ -162,11 +177,10 @@ The agent is configured via `.doc-agent.config.json`:
   "documentationPaths": ["docs/**/*.md", "README.md"],
   "codePaths": ["src/**/*.ts", "src/**/*.js"],
   "ignorePaths": ["node_modules/**", "dist/**", "test/**"],
-  "autoApprove": false,
   "minSeverity": "minor",
   "generateMissingDocs": false,
-  "llmProvider": "openai",
-  "llmModel": "gpt-4-turbo",
+  "llmProvider": "anthropic",
+  "llmModel": "claude-3-7-sonnet-20250219",
   "temperature": 0.3,
   "documentationFormat": "markdown",
   "mode": "manual"
@@ -175,31 +189,76 @@ The agent is configured via `.doc-agent.config.json`:
 
 ### Configuration Options
 
-- **documentationPaths**: Glob patterns for documentation files to monitor
-- **codePaths**: Glob patterns for code files to analyze
-- **ignorePaths**: Glob patterns for files to ignore
-- **autoApprove**: Automatically apply updates without review (default: false)
-- **minSeverity**: Minimum change severity to trigger updates (breaking, major, minor, patch)
-- **generateMissingDocs**: Generate documentation for undocumented APIs
-- **llmProvider**: AI provider (openai, anthropic, local)
-- **llmModel**: Model name to use
-- **temperature**: AI temperature setting (0-2)
-- **documentationFormat**: Documentation format (markdown, mdx)
-- **mode**: Execution mode (manual, pre-commit, post-commit, ci)
+- **documentationPaths** (string[]): Glob patterns for documentation files to monitor
+  - Example: `["docs/**/*.md", "README.md"]`
+  
+- **codePaths** (string[]): Glob patterns for code files to analyze
+  - Example: `["src/**/*.ts", "src/**/*.js"]`
+  
+- **ignorePaths** (string[]): Glob patterns for files to ignore
+  - Example: `["node_modules/**", "dist/**", "*.test.ts"]`
+  
+- **minSeverity** (string): Minimum change severity to trigger updates
+  - Options: `"breaking"`, `"major"`, `"minor"`, `"patch"`
+  - Default: `"minor"`
+  
+- **generateMissingDocs** (boolean): Generate documentation for undocumented APIs (not implemented in v1.0)
+  - Default: `false`
+  
+- **llmProvider** (string): AI provider to use
+  - Options: `"anthropic"` (only option in v1.0)
+  - Default: `"anthropic"`
+  
+- **llmModel** (string): Model name to use
+  - For Anthropic: `"claude-sonnet-4-5-20250929"` (recommended), `"claude-sonnet-4-20250514"`, `"claude-3-7-sonnet-20250219"`
+  - Default: `"claude-sonnet-4-5-20250929"`
+  
+- **temperature** (number): AI temperature setting (0-2)
+  - Lower values (0.1-0.3) for more focused, deterministic output
+  - Higher values (0.7-1.0) for more creative output
+  - Default: `0.3`
+  
+- **documentationFormat** (string): Documentation format
+  - Options: `"markdown"` (only option in v1.0)
+  - Default: `"markdown"`
+  
+- **mode** (string): Execution mode
+  - Options: `"manual"` (only option in v1.0)
+  - Default: `"manual"`
 
 ## Project Structure
 
 ```
 doc-agent/
 ├── src/
-│   ├── cli.ts              # CLI entry point
-│   ├── index.ts            # Main exports
+│   ├── cli.ts                      # CLI entry point
+│   ├── index.ts                    # Main exports
 │   ├── types/
-│   │   └── index.ts        # Core type definitions
+│   │   └── index.ts                # Core type definitions
 │   ├── config/
-│   │   └── ConfigManager.ts # Configuration management
-│   └── components/         # Agent components (to be implemented)
-├── dist/                   # Compiled output
+│   │   └── ConfigManager.ts        # Configuration management
+│   ├── controller/
+│   │   └── AgentController.ts      # Main pipeline orchestrator
+│   ├── detection/
+│   │   └── ChangeDetector.ts       # Git and file change detection
+│   ├── parsing/
+│   │   └── CodeParser.ts           # AST parsing for code analysis
+│   ├── diff/
+│   │   └── DiffAnalyzer.ts         # API diff analysis
+│   ├── mapping/
+│   │   └── DocumentationMapper.ts  # Documentation reference mapping
+│   ├── context/
+│   │   └── ContextBuilder.ts       # Context building for AI
+│   ├── generation/
+│   │   └── AIDocumentationGenerator.ts  # AI-powered doc generation
+│   ├── review/
+│   │   └── ReviewInterface.ts      # Interactive review UI
+│   └── utils/
+│       ├── FileManager.ts          # File operations
+│       └── Logger.ts               # Structured logging
+├── dist/                           # Compiled output
+├── coverage/                       # Test coverage reports
+├── docs/                           # Project documentation
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -254,6 +313,61 @@ npm run test
 npm run test:watch
 ```
 
+## Logging and Debugging
+
+The agent includes structured logging to help you understand what's happening during execution.
+
+### Log Levels
+
+- **Normal mode**: Shows only errors and warnings
+- **Verbose mode** (`--verbose`): Shows info messages, phase transitions, and metrics
+- **Debug mode** (`--debug`): Shows everything including detailed debug information and stack traces
+
+### Example Output
+
+**Verbose mode:**
+```bash
+$ node dist/cli.js run --verbose
+
+🤖 Documentation Maintenance Agent
+
+📝 Mode: Analyzing changes since last commit
+
+🚀 Starting agent pipeline...
+
+▶ Phase: Detecting changes
+  Changes detected: 3
+
+▶ Phase: Parsing and analyzing code
+  Files parsed: 3
+  Diffs found: 2
+
+▶ Phase: Mapping to affected documentation
+  Affected docs: 1
+
+▶ Phase: Generating documentation updates
+  Updates generated: 1
+
+▶ Phase: Reviewing updates
+[Review interface...]
+
+▶ Phase: Applying approved updates
+  Updates applied: 1
+  Execution time: 2341ms
+
+✅ Agent execution completed successfully!
+```
+
+**Debug mode:**
+```bash
+$ node dist/cli.js run --debug
+
+# Shows all verbose output plus:
+# - Detailed data structures
+# - Full error stack traces
+# - Internal state information
+```
+
 ## Troubleshooting
 
 ### "ANTHROPIC_API_KEY environment variable is required"
@@ -286,29 +400,60 @@ The agent found code changes but couldn't find any documentation that references
 
 ## Development Status
 
-**Version 1.0 - Core Implementation Complete**
+**Version 1.0 - Core Implementation Complete** ✅
 
 This is the initial version focusing on manual CLI execution with interactive feedback.
 
-### Completed
-- ✅ Project structure and tooling setup
-- ✅ TypeScript configuration with strict mode
-- ✅ Core type definitions
-- ✅ Configuration management with validation
-- ✅ Git-based change detection
-- ✅ Code parsing for JavaScript/TypeScript
-- ✅ Diff analysis with severity classification
-- ✅ Documentation mapping and reference finding
-- ✅ Context building for AI prompts
-- ✅ AI documentation generation (Anthropic/Claude)
-- ✅ Interactive review interface
-- ✅ Agent orchestration and pipeline
-- ✅ CLI interface with commands
+### What's Included in v1.0
 
-### Next Steps
-- 🔄 End-to-end testing
-- 🔄 Performance optimization
-- 🔄 Additional documentation and examples
+- ✅ **Manual CLI execution** - Run on-demand to update docs
+- ✅ **Git-based change detection** - Analyze commits
+- ✅ **File-based change detection** - Analyze specific files
+- ✅ **TypeScript/JavaScript support** - AST-based code parsing
+- ✅ **Anthropic Claude integration** - AI-powered doc generation
+- ✅ **Interactive review** - Approve/reject each change
+- ✅ **Diff display** - See exactly what will change
+- ✅ **Structured logging** - Debug and verbose modes
+- ✅ **Comprehensive tests** - 151 tests with E2E coverage
+
+### v1.0 Limitations
+
+**Only Anthropic Claude is supported:**
+- ❌ OpenAI GPT models - planned for v2.0
+- ❌ Local models - planned for future release
+
+**Only manual mode:**
+- ❌ Automatic git hooks - you can set these up manually (see examples)
+- ❌ Built-in CI/CD integration - you can integrate manually (see examples)
+- ❌ Watch mode - planned for future release
+
+**Only Markdown:**
+- ❌ MDX support - planned for future release
+- ❌ Other formats - not planned
+
+**Only updates existing docs:**
+- ❌ Generating docs for undocumented APIs - planned for future release
+
+**Only TypeScript/JavaScript:**
+- ❌ Python, Java, Go, etc. - planned for future releases
+
+### Future Enhancements
+
+- 🔮 Support for additional LLM providers (OpenAI, local models)
+- 🔮 Automatic git hooks integration (pre-commit, post-commit)
+- 🔮 Built-in CI/CD integration modes
+- 🔮 Performance optimization and caching
+- 🔮 Watch mode for continuous monitoring
+- 🔮 Generate documentation for undocumented APIs
+- 🔮 Support for more languages (Python, Java, etc.)
+- 🔮 MDX format support
+
+## Documentation
+
+- **[Setup Guide](docs/SETUP.md)** - Complete installation and configuration guide
+- **[Usage Guide](docs/USAGE.md)** - Practical workflows and examples
+- **[Configuration Reference](docs/CONFIGURATION.md)** - Detailed configuration options
+- **[Examples](docs/EXAMPLES.md)** - Real-world usage scenarios
 
 ## License
 

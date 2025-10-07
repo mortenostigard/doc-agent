@@ -17,8 +17,8 @@
   ],
   "minSeverity": "minor",
   "generateMissingDocs": false,
-  "llmProvider": "openai",
-  "llmModel": "gpt-4-turbo",
+  "llmProvider": "anthropic",
+  "llmModel": "claude-sonnet-4-5-20250929",
   "temperature": 0.3,
   "documentationFormat": "markdown",
   "mode": "manual"

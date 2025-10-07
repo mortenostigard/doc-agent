@@ -105,7 +105,7 @@ greet('Alice'); // Returns "Hello, Alice!"
       minSeverity: 'minor',
       generateMissingDocs: false,
       llmProvider: 'anthropic',
-      llmModel: 'claude-3-5-sonnet-20241022',
+      llmModel: 'claude-sonnet-4-5-20250929',
       temperature: 0.3,
       documentationFormat: 'markdown',
       mode: 'manual',

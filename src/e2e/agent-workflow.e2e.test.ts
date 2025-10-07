@@ -50,7 +50,7 @@ add(5, 3, 2); // Returns 10
                             }),
                         },
                     ],
-                    model: 'claude-3-5-sonnet-20250219',
+                    model: 'claude-sonnet-4-5-20250929',
                     stop_reason: 'end_turn',
                     usage: {
                         input_tokens: 100,
@@ -138,7 +138,7 @@ add(5, 3); // Returns 8
             minSeverity: 'minor',
             generateMissingDocs: false,
             llmProvider: 'anthropic',
-            llmModel: 'claude-3-5-sonnet-20250219',
+            llmModel: 'claude-sonnet-4-5-20250929',
             temperature: 0.3,
             documentationFormat: 'markdown',
             mode: 'manual',

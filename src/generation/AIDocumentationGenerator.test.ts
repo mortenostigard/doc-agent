@@ -57,7 +57,7 @@ describe('AIDocumentationGenerator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Use maxRetries=1 to avoid retry logic in tests
-    generator = new AIDocumentationGenerator('test-api-key', 'claude-3-5-sonnet-20241022', 0.3, 1);
+    generator = new AIDocumentationGenerator('test-api-key', 'claude-sonnet-4-5-20250929', 0.3, 1);
   });
 
   describe('constructor', () => {
@@ -210,7 +210,7 @@ describe('AIDocumentationGenerator', () => {
     it('should retry on failure', async () => {
       const retryGenerator = new AIDocumentationGenerator(
         'test-key',
-        'claude-3-5-sonnet-20241022',
+        'claude-sonnet-4-5-20250929',
         0.3,
         3
       );
@@ -305,7 +305,7 @@ describe('AIDocumentationGenerator', () => {
     it('should retry on failure', async () => {
       const retryGenerator = new AIDocumentationGenerator(
         'test-key',
-        'claude-3-5-sonnet-20241022',
+        'claude-sonnet-4-5-20250929',
         0.3,
         2
       );

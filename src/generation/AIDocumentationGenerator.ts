@@ -30,7 +30,7 @@ export class AIDocumentationGenerator {
 
   constructor(
     apiKey: string,
-    model: string = 'claude-3-5-sonnet-20241022',
+    model: string = 'claude-sonnet-4-5-20250929',
     temperature: number = 0.3,
     maxRetries: number = 3
   ) {
